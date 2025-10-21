@@ -214,6 +214,19 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    outline: none;
+}
+
+.paste-area:focus {
+    border-color: #4285f4;
+    background: #f0f7ff;
+    color: #1a1a1a;
+}
+
+.paste-area[contenteditable="true"] {
+    -webkit-user-modify: read-only;
+    -moz-user-modify: read-only;
+    user-modify: read-only;
 }
 
 .paste-area:hover {

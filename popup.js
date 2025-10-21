@@ -170,11 +170,18 @@ function setupEventListeners() {
             pasteArea.addEventListener('dragleave', handleDragLeave);
             pasteArea.addEventListener('drop', handleDrop);
             
+            // Global paste event listener
+            document.addEventListener('paste', handleGlobalPaste);
+            
             // Keyboard shortcuts
             document.addEventListener('keydown', (e) => {
                 if (e.ctrlKey || e.metaKey) {
-                    if (e.key === 'v' && e.target === pasteArea) {
-                        setTimeout(handlePaste, 10);
+                    if (e.key === 'v') {
+                        // Check if decode tab is active
+                        const decodeTab = document.getElementById('decodeTab');
+                        if (decodeTab && decodeTab.classList.contains('active')) {
+                            setTimeout(handlePaste, 10);
+                        }
                     }
                 }
             });
@@ -444,22 +451,66 @@ function handleDrop(event) {
     }
 }
 
-function handlePaste() {
-    navigator.clipboard.read().then(data => {
-        for (let item of data) {
-            if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
-                item.getType('image/png').then(blob => {
-                    const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
-                    document.getElementById('fileName').textContent = file.name;
-                    processImageFile(file);
-                });
-                break;
+function handleGlobalPaste(event) {
+    // Check if decode tab is active
+    const decodeTab = document.getElementById('decodeTab');
+    if (!decodeTab || !decodeTab.classList.contains('active')) {
+        return;
+    }
+    
+    // Prevent default paste behavior
+    event.preventDefault();
+    
+    // Try clipboard API first
+    if (navigator.clipboard && navigator.clipboard.read) {
+        navigator.clipboard.read().then(data => {
+            for (let item of data) {
+                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                    item.getType('image/png').then(blob => {
+                        const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
+                        const fileNameElement = document.getElementById('fileName');
+                        if (fileNameElement) fileNameElement.textContent = file.name;
+                        processImageFile(file);
+                    });
+                    break;
+                }
+            }
+        }).catch(error => {
+            console.error('Clipboard API paste error:', error);
+            // Fallback to traditional paste
+            handleTraditionalPaste(event);
+        });
+    } else {
+        // Fallback to traditional paste
+        handleTraditionalPaste(event);
+    }
+}
+
+function handleTraditionalPaste(event) {
+    const items = event.clipboardData?.items;
+    if (!items) {
+        showStatusMessage('errorPaste', 'error');
+        return;
+    }
+    
+    for (let item of items) {
+        if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+                const fileNameElement = document.getElementById('fileName');
+                if (fileNameElement) fileNameElement.textContent = 'pasted-image.png';
+                processImageFile(file);
+                return;
             }
         }
-    }).catch(error => {
-        console.error('Paste error:', error);
-        showStatusMessage('errorPaste', 'error');
-    });
+    }
+    
+    showStatusMessage('errorPaste', 'error');
+}
+
+function handlePaste() {
+    // This function is kept for backward compatibility
+    handleGlobalPaste({ preventDefault: () => {}, clipboardData: null });
 }
 
 function processImageFile(file) {
@@ -476,13 +527,24 @@ function processImageFile(file) {
 }
 
 function decodeQRCode(imageSrc) {
+    // Check if jsQR library is loaded
+    if (typeof jsQR === 'undefined') {
+        console.error('jsQR library not loaded');
+        showStatusMessage('errorDecode', 'error');
+        return;
+    }
+    
     const img = new Image();
     img.onload = function() {
         try {
+            console.log('Image loaded:', img.width, 'x', img.height);
+            
             // Create canvas with optimal size for QR detection
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const sizes = [400, 300, 200, img.width, img.height];
+            
+            // Try multiple sizes for better detection
+            const sizes = [800, 600, 400, 300, 200, img.width, img.height];
             let code = null;
             
             for (let size of sizes) {
@@ -522,10 +584,19 @@ function decodeQRCode(imageSrc) {
             }
             
             if (code) {
-                document.getElementById('decodedText').value = code.data;
-                document.getElementById('decodeResult').style.display = 'block';
+                console.log('QR code decoded successfully:', code.data);
+                const decodedTextElement = document.getElementById('decodedText');
+                const decodeResultElement = document.getElementById('decodeResult');
+                
+                if (decodedTextElement) {
+                    decodedTextElement.value = code.data;
+                }
+                if (decodeResultElement) {
+                    decodeResultElement.style.display = 'block';
+                }
                 showStatusMessage('successDecoded', 'success');
             } else {
+                console.log('No QR code found in image');
                 showStatusMessage('errorDecode', 'error');
             }
         } catch (error) {
