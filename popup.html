@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Language Toggle -->
+        <div class="header">
+            <h1 data-text="title">QR Code Generator</h1>
+            <div class="language-toggle">
+                <button id="langToggle" class="lang-btn">VI</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="generate">
+                <span data-text="tabGenerate">Generate QR</span>
+            </button>
+            <button class="tab-btn" data-tab="decode">
+                <span data-text="tabDecode">Decode QR</span>
+            </button>
+        </div>
+
+        <!-- Generate QR Tab -->
+        <div id="generateTab" class="tab-content active">
+            <div class="input-section">
+                <label for="qrInput" data-text="inputLabel">Enter text or URL:</label>
+                <textarea id="qrInput" placeholder="Paste your link or text here..." data-placeholder="inputPlaceholder"></textarea>
+            </div>
+            
+            <div class="button-section">
+                <button id="generateBtn" class="primary-btn" data-text="generateBtn">Generate QR Code</button>
+            </div>
+
+            <div id="qrResult" class="result-section" style="display: none;">
+                <h3 data-text="resultTitle">Generated QR Code:</h3>
+                <div class="qr-display">
+                    <canvas id="qrCanvas"></canvas>
+                </div>
+                <div class="action-buttons">
+                    <button id="downloadBtn" class="secondary-btn" data-text="downloadBtn">Download</button>
+                    <button id="copyBtn" class="secondary-btn" data-text="copyBtn">Copy Image</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decode QR Tab -->
+        <div id="decodeTab" class="tab-content">
+            <div class="input-section">
+                <label data-text="decodeLabel">Upload or paste QR code image:</label>
+                
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button id="uploadBtn" class="secondary-btn" data-text="uploadBtn">Choose File</button>
+                    <span id="fileName" class="file-name"></span>
+                </div>
+
+                <!-- Paste Section -->
+                <div class="paste-section">
+                    <div class="paste-area" id="pasteArea" data-text="pasteArea">
+                        Click here to paste image or drag & drop
+                    </div>
+                </div>
+            </div>
+
+            <div id="decodeResult" class="result-section" style="display: none;">
+                <h3 data-text="decodeResultTitle">Decoded Content:</h3>
+                <div class="decode-display">
+                    <textarea id="decodedText" readonly></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button id="copyDecodedBtn" class="secondary-btn" data-text="copyDecodedBtn">Copy Text</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="libs/qrcode.min.js"></script>
+    <script src="libs/jsQR.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
